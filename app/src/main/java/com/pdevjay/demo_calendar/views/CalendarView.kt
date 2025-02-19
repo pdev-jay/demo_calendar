@@ -74,10 +74,6 @@ fun CustomCalendar(modifier: Modifier = Modifier, innerPadding: PaddingValues = 
         // Days grid
         DaysGrid(slideDirection, calendarViewModel)
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Selected date display
-        Text(text = "Selected Date: ${calendarState.selectedDate ?: LocalDate.now().toString()}", fontSize = 18.sp)
     }
 }
 

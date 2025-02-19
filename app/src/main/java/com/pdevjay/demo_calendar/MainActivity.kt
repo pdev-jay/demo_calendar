@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.pdevjay.demo_calendar.ui.theme.Demo_calendarTheme
-import com.pdevjay.demo_calendar.views.CustomCalendar
+import com.pdevjay.demo_calendar.views.MainView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                 ) { innerPadding ->
-                    CustomCalendar(innerPadding = innerPadding)
+                    MainView(innerPadding = innerPadding)
                 }
             }
         }

@@ -17,5 +17,3 @@ data class CalendarState(
     val days: List<CalendarData> = emptyList(),
     val selectedDate: LocalDate? = null,
 )
-
-data class Task(val title: String, val date: LocalDate)
