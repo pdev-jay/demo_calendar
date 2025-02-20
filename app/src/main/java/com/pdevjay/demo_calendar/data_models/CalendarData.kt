@@ -3,17 +3,18 @@ package com.pdevjay.demo_calendar.data_models
 import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 
-// --- Data Class ---
 @Immutable
-data class CalendarData(
+data class CalendarDay(
     val date: LocalDate,
-    val isCurrentMonth: Boolean,
-    val hasTask: Boolean = false,
-)
+    val taskCount: Int = 0,
+    val completedCount: Int = 0,
+) {
+    val progress: Float
+        get() = if (taskCount > 0) completedCount.toFloat() / taskCount else 0f
+}
 
-// --- State ---
 data class CalendarState(
     val currentMonth: LocalDate = LocalDate.now(),
-    val days: List<CalendarData> = emptyList(),
-    val selectedDate: LocalDate? = null,
+    val days: List<CalendarDay> = emptyList(),
+    val selectedDate: LocalDate = LocalDate.now()
 )

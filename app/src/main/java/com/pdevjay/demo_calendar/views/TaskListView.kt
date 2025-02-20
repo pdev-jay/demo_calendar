@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,14 +27,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.demo_calendar.data_models.Task
 import com.pdevjay.demo_calendar.intents.TaskIntent
 import com.pdevjay.demo_calendar.ui.theme.Demo_calendarTheme
 import com.pdevjay.demo_calendar.viewmodels.TaskViewModel
+import java.time.LocalDate
 
 @Composable
-fun TaskListView(innerPadding: PaddingValues, taskViewModel: TaskViewModel = viewModel()){
+fun TaskListView(innerPadding: PaddingValues, taskViewModel: TaskViewModel = hiltViewModel()){
 
     Column(
         modifier = Modifier
@@ -53,14 +55,7 @@ private fun AddButton(taskViewModel: TaskViewModel) {
             .fillMaxWidth()
             .padding(8.dp),
         onClick = {
-            taskViewModel.processIntent(
-                TaskIntent.AddTask(
-                    Task(
-                        title = "New Task",
-                        isCompleted = false
-                    )
-                )
-            )
+            taskViewModel.processIntent(TaskIntent.AddTask(Task(title = "New Task", isCompleted = false, date = LocalDate.now())))
         }
     ) {
         Text(text = "Add Task")
@@ -78,9 +73,10 @@ fun TaskListContent(innerPadding: PaddingValues = PaddingValues(0.dp), taskViewM
             .background(color = Color.White),
     ){
         items(taskState.tasks.size) { index ->
-            TaskItem(task = taskState.tasks[index],
-                onTaskClick = {taskViewModel.processIntent(TaskIntent.CompleteTask(index))},
-                onDeleteClick = {taskViewModel.processIntent(TaskIntent.DeleteTask(index))})
+            val task = taskState.tasks[index]
+            TaskItem(task = task,
+                onTaskClick = {taskViewModel.processIntent(TaskIntent.ToggleTaskCompletion(task.id))},
+                onDeleteClick = {taskViewModel.processIntent(TaskIntent.DeleteTask(task.id))})
         }
     }
 }
@@ -90,7 +86,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit = {}, onDeleteClick: () -> Unit
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(12.dp)
             .background(color = Color.White)
     ){
         Row(
@@ -101,6 +97,7 @@ fun TaskItem(task: Task, onTaskClick: () -> Unit = {}, onDeleteClick: () -> Unit
         ) {
             Text(
                 modifier = Modifier
+                    .weight(1f)
                     .clickable(){
                         onTaskClick()
                     },

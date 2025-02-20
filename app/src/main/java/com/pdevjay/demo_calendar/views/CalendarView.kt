@@ -1,7 +1,6 @@
 package com.pdevjay.demo_calendar.views
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -24,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,9 +35,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.pdevjay.demo_calendar.R
-import com.pdevjay.demo_calendar.data_models.CalendarData
+import com.pdevjay.demo_calendar.data_models.CalendarDay
 import com.pdevjay.demo_calendar.intents.CalendarIntent
 import com.pdevjay.demo_calendar.ui.theme.Demo_calendarTheme
 import com.pdevjay.demo_calendar.viewmodels.CalendarViewModel
@@ -50,7 +48,8 @@ import java.util.Locale
 
 
 @Composable
-fun CustomCalendar(modifier: Modifier = Modifier, innerPadding: PaddingValues = PaddingValues(0.dp), calendarViewModel: CalendarViewModel = viewModel()) {
+fun CustomCalendar(modifier: Modifier = Modifier, innerPadding: PaddingValues = PaddingValues(0.dp), calendarViewModel: CalendarViewModel = hiltViewModel()) {
+
     val calendarState by calendarViewModel.calendarState.collectAsState()
 
     var slideDirection by remember { mutableIntStateOf(1) } // 1: 다음 달, -1: 이전 달
@@ -74,6 +73,8 @@ fun CustomCalendar(modifier: Modifier = Modifier, innerPadding: PaddingValues = 
         // Days grid
         DaysGrid(slideDirection, calendarViewModel)
 
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Today: ${calendarState.selectedDate}")
     }
 }
 
@@ -121,12 +122,6 @@ private fun DaysGrid(
 ) {
     val calendarState by calendarViewModel.calendarState.collectAsState()
 
-    val completedTaskCount = 10 // 완료된 태스크 개수
-    val maxTaskCount = 10 // 최대 태스크 개수
-    val lineWidth = getLineWidth(completedTaskCount, maxTaskCount) // 4dp에서 20dp 사이에서 완료율에 따라 길이 조절
-    // 색상 계산 함수
-    val indicatorColor = getIndicatorColor(lineWidth)
-
     AnimatedContent(
         targetState = calendarState.currentMonth,
         transitionSpec = {
@@ -142,13 +137,16 @@ private fun DaysGrid(
             calendarState.days.chunked(7).forEach{ week ->
                 Row(modifier = Modifier.fillMaxWidth()) {
                     week.forEach{ day ->
+                        val lineWidth = getLineWidth(day.completedCount, day.taskCount)
+                        val indicatorColor = getIndicatorColor(lineWidth)
                         DateCell(
                             modifier = Modifier.weight(1f),
                             day = day,
+                            currentMonth = calendarState.currentMonth,
                             isSelected = day.date == calendarState.selectedDate,
                             lineWidth,
                             indicatorColor,
-                            onDateSelected = {calendarViewModel.processIntent(CalendarIntent.SelectDate(it))},
+                            onDateSelected = {calendarViewModel.processIntent(CalendarIntent.SelectDate(day.date))},
                         )
                     }
                 }
@@ -160,7 +158,8 @@ private fun DaysGrid(
 @Composable
 private fun DateCell(
     modifier: Modifier = Modifier,
-    day: CalendarData,
+    day: CalendarDay,
+    currentMonth: LocalDate,
     isSelected: Boolean,
     lineWidth: Dp,
     indicatorColor: Color,
@@ -179,10 +178,9 @@ private fun DateCell(
         Column (horizontalAlignment = Alignment.CenterHorizontally){
             Text(
                 text = day.date.dayOfMonth.toString(),
-                color = when (day.date) {
-                    LocalDate.now() -> Color.Red
-                    in LocalDate.now().withDayOfMonth(1)..LocalDate.now()
-                        .withDayOfMonth(LocalDate.now().lengthOfMonth()) -> Color.Black
+                color = when {
+                    day.date == LocalDate.now() -> Color.Red
+                    day.date.month == currentMonth.month && day.date.year == currentMonth.year -> Color.Black
                     else -> Color.Gray
                 }
             )
@@ -190,7 +188,7 @@ private fun DateCell(
                 modifier = Modifier
                     .height(4.dp)
                     .width(lineWidth)
-                    .background(if (day.hasTask) indicatorColor else Color.Transparent)
+                    .background(if (day.taskCount != 0) indicatorColor else Color.Transparent)
                     .align(Alignment.Start)
             )
         }
@@ -219,7 +217,8 @@ private fun getIndicatorColor(lineWidth: Dp): Color {
     val indicatorColor = when {
         lineWidth.value <= 6 -> colorResource(R.color.progress_bar_color_red)      // 짧을 때 (진행도 낮음)
         lineWidth.value <= 19 -> colorResource(R.color.progress_bar_color_orange)  // 중간 길이 (진행도 중간)
-        else -> colorResource(R.color.progress_bar_color_green)                    // 길 때 (진행도 완료)
+        lineWidth.value <= 20 -> colorResource(R.color.progress_bar_color_green)    // 길 때 (진행도 완료)
+        else -> Color.Transparent                    // 기본
     }
     return indicatorColor
 }
